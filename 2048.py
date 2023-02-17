@@ -90,8 +90,20 @@ def merge():
     return merged
 
 # Print the board
-def print_board():
-    print('\n'.join([' '.join([str(cell).rjust(4) for cell in row]) for row in board]))
+def print_board(board):
+    print('┌─────┬─────┬─────┬─────┐')
+    for row in board:
+        row_str = '│'
+        for cell in row:
+            if cell == 0:
+                row_str += '     '
+            else:
+                row_str += '{:^5}'.format(cell)
+            row_str += '│'
+        print(row_str)
+        print('├─────┼─────┼─────┼─────┤')
+    print('│ Score: {:<5}          │'.format(score))
+    print('└─────┴─────┴─────┴─────┘')
 
 # Check if the game is over
 def is_game_over():
@@ -125,12 +137,11 @@ def move_tiles(key):
         moved = move_down()
     if moved:
         merge()
-        print_board()
-        print("----------")
+        print_board(board)
 
 # Play the game
 add_random_tile()
-print_board()
+print_board(board)
 while not is_game_over():
     try:
         keyboard.on_press_key('left', move_tiles)
