@@ -4,6 +4,7 @@ import keyboard
 # Initialize the board and score
 board = [[0 for i in range(4)] for j in range(4)]
 score = 0
+min_tiles = 8
 
 # Add two random tiles to the board
 def add_random_tile():
@@ -11,6 +12,10 @@ def add_random_tile():
     if empty_cells:
         row, col = random.choice(empty_cells)
         board[row][col] = random.choice([2, 4])
+        # add an extra tile if the board has fewer than min_tiles tiles
+        if len(empty_cells) > 1 and len(empty_cells) < min_tiles:
+            row, col = random.choice(empty_cells)
+            board[row][col] = random.choice([2, 4])
 
 # Move tiles in the specified direction
 def move_left():
@@ -21,6 +26,13 @@ def move_left():
         new_row = [cell for cell in row if cell != 0] + [0] * row.count(0)
         if new_row != row:
             moved = True
+        for j in range(3):
+            if new_row[j] != 0 and new_row[j] == new_row[j+1]:
+                new_row[j] *= 2
+                new_row[j+1] = 0
+                score += new_row[j]
+                moved = True
+        new_row = [cell for cell in new_row if cell != 0] + [0] * new_row.count(0)
         board[i] = new_row
     if moved:
         add_random_tile()
@@ -34,6 +46,13 @@ def move_right():
         new_row = [0] * row.count(0) + [cell for cell in row if cell != 0]
         if new_row != row:
             moved = True
+        for j in range(3, 0, -1):
+            if new_row[j] != 0 and new_row[j] == new_row[j-1]:
+                new_row[j] *= 2
+                new_row[j-1] = 0
+                score += new_row[j]
+                moved = True
+        new_row = [0] * new_row.count(0) + [cell for cell in new_row if cell != 0]
         board[i] = new_row
     if moved:
         add_random_tile()
@@ -42,13 +61,20 @@ def move_right():
 def move_up():
     global score
     moved = False
-    for i in range(4):
-        col = [board[j][i] for j in range(4)]
-        new_col = [cell for cell in col if cell != 0] + [0] * col.count(0)
-        if new_col != col:
+    for j in range(4):
+        column = [board[i][j] for i in range(4)]
+        new_column = [cell for cell in column if cell != 0] + [0] * column.count(0)
+        if new_column != column:
             moved = True
-        for j in range(4):
-            board[j][i] = new_col[j]
+        for i in range(3):
+            if new_column[i] != 0 and new_column[i] == new_column[i+1]:
+                new_column[i] *= 2
+                new_column[i+1] = 0
+                score += new_column[i]
+                moved = True
+        new_column = [cell for cell in new_column if cell != 0] + [0] * new_column.count(0)
+        for i in range(4):
+            board[i][j] = new_column[i]
     if moved:
         add_random_tile()
     return moved
@@ -56,39 +82,24 @@ def move_up():
 def move_down():
     global score
     moved = False
-    for i in range(4):
-        col = [board[j][i] for j in range(4)]
-        new_col = [0] * col.count(0) + [cell for cell in col if cell != 0]
-        if new_col != col:
+    for j in range(4):
+        column = [board[i][j] for i in range(3, -1, -1)]
+        new_column = [0] * column.count(0) + [cell for cell in column if cell != 0]
+        if new_column != column:
             moved = True
-        for j in range(4):
-            board[j][i] = new_col[j]
+        for i in range(len(new_column) - 1, 0, -1):
+            if new_column[i] != 0 and new_column[i] == new_column[i-1]:
+                new_column[i] *= 2
+                new_column[i-1] = 0
+                score += new_column[i]
+                moved = True
+        new_column = [0] * new_column.count(0) + [cell for cell in new_column if cell != 0]
+        new_column = [0] * (4 - len(new_column)) + new_column
+        for i in range(4):
+            board[3-i][j] = new_column[3-i]
     if moved:
         add_random_tile()
     return moved
-
-# Merge adjacent tiles with the same value
-def merge():
-    global score
-    merged = False
-    # merge horizontally
-    for i in range(4):
-        for j in range(3):
-            if board[i][j] != 0 and board[i][j] == board[i][j+1]:
-                board[i][j] *= 2
-                board[i][j+1] = 0
-                score += board[i][j]
-                merged = True
-    # merge vertically
-    for i in range(4):
-        for j in range(3):
-            if board[j][i] != 0 and board[j][i] == board[j+1][i]:
-                board[j][i] *= 2
-                board[j+1][i] = 0
-                score += board[j][i]
-                merged = True
-    return merged
-
 # Print the board
 def print_board(board):
     print('┌─────┬─────┬─────┬─────┐')
@@ -136,7 +147,6 @@ def move_tiles(key):
     elif key.name == 'down':
         moved = move_down()
     if moved:
-        merge()
         print_board(board)
 
 # Play the game
